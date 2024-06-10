@@ -158,6 +158,33 @@ class AKV:
             for i in range(self.domain_size)
         ]
 
+    def get_influence_polarization(
+        self, k: int = 201, K: float = 1000, alpha: float = 1.6
+    ) -> List[List[float]]:
+
+        def polarization(belief_array):
+            pi, bin_edges = np.histogram(
+                belief_array, bins=k, range=(0, 1), density=False
+            )
+            y = [bin_edges[i] + (1 / k) / 2 for i in range(k)]
+            pi = pi / np.sum(pi)
+
+            return K * np.sum(
+                np.sum(
+                    np.power(pi[i], 1 + alpha) * pi[j] * np.abs(y[i] - y[j])
+                    for j in range(k)
+                )
+                for i in range(k)
+            )
+
+        return [
+            [
+                polarization(influence_graph[i])
+                for i in range(self.number_of_agents)
+            ]
+            for influence_graph in self.influence_graph_history
+        ]
+
 
 class InfluenceGraphs:
     """Catalog of Influence Graphs in the literature. All functions are static."""
