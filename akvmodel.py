@@ -481,7 +481,8 @@ class UpdateFunctions:
             a_i = [
                 j for j in range(len(influence_graph[i])) if influence_graph[j][i] > 0
             ]
-            return belief_array[i] + (1 / len(a_i)) * np.sum(
+            # return belief_array[i] + (1 / len(a_i)) * np.sum(
+            return belief_array[i] + (1 / len(influence_graph[0])) * np.sum(
                 influence_graph[j][i] * (belief_array[j] - belief_array[i]) for j in a_i
             )
 
