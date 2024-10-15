@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from netgraph import Graph
+from networkx.algorithms import bipartite
 
 from akvmodel import AKV
 
@@ -17,7 +19,7 @@ def get_belief_array_history(
     return [belief_state[0] for belief_state in belief_state_history]
 
 
-def is_flow_conservative(influence_graph, num_agents):
+def is_balanced(influence_graph, num_agents):
     for i in range(num_agents):
         if not np.isclose(np.sum(influence_graph[i, :]), np.sum(influence_graph[:, i])):
             return False
@@ -26,7 +28,7 @@ def is_flow_conservative(influence_graph, num_agents):
 
 
 def draw_graph(model: AKV) -> None:
-    _, ax = plt.subplots(1, 1, figsize=(10, 5))
+    _, ax = plt.subplots(1, 2, figsize=(10, 5))
 
     step = 0
     ax[step].axis("off")
@@ -74,6 +76,7 @@ def draw_graph(model: AKV) -> None:
 
     plt.show()
 
+
 def draw_graph_2(model):
     _, ax = plt.subplots(1, 1, figsize=(5, 5))
 
@@ -91,6 +94,8 @@ def draw_graph_2(model):
         weight="weight",
     )
     pos = nx.spring_layout(DG0)
+    # pos = nx.bipartite_layout(DG0, bipartite.sets(DG0)[0])
+    # pos = nx.planar_layout(DG0)
     nx.draw_networkx_nodes(DG0, pos, ax=ax)
     nx.draw_networkx_labels(DG0, pos, ax=ax)
     nx.draw_networkx_edges(DG0, pos, ax=ax)
@@ -101,3 +106,57 @@ def draw_graph_2(model):
 
     plt.savefig("image.png")
     plt.show()
+
+
+def draw_graph_3(model: AKV) -> None:
+    _, ax = plt.subplots(1, 2, figsize=(10, 5))
+
+    step = 0
+    ax[step].axis("off")
+    DG0 = nx.DiGraph()
+    DG0.add_nodes_from(list(range(model.number_of_agents)))
+    DG0.add_weighted_edges_from(
+        [
+            (i, j, round(model.influence_graph_history[step][i][j], 2))
+            for i in range(model.number_of_agents)
+            for j in range(model.number_of_agents)
+            if model.influence_graph_history[step][i][j] != 0 and i != j
+        ],
+        weight="weight",
+    )
+    g = Graph(DG0, node_labels=True, edge_labels=True, ax=ax[step])
+
+    step = 1
+    ax[step].axis("off")
+    DG1 = nx.DiGraph()
+    DG1.add_nodes_from(list(range(model.number_of_agents)))
+    DG1.add_weighted_edges_from(
+        [
+            (i, j, round(model.influence_graph_history[step][i][j], 2))
+            for i in range(model.number_of_agents)
+            for j in range(model.number_of_agents)
+            if model.influence_graph_history[step][i][j] != 0 and i != j
+        ],
+        weight="weight",
+    )
+    Graph(
+        DG0,
+        node_labels=True,
+        edge_labels=True,
+        ax=ax[step],
+        node_layout=g.node_positions,
+    )
+
+    plt.savefig("image.png")
+    plt.show()
+
+
+def latex_matrix(matrix):
+    s = ""
+    for i in range(len(matrix)):
+        s += f"{round(matrix[i][0], 2)}"
+        for j in range(1, len(matrix[i])):
+            s += f" & {round(matrix[i][j], 2)}"
+        if i != len(matrix) - 1:
+            s += " \\\\\n"
+    return s

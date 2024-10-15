@@ -178,10 +178,7 @@ class AKV:
             )
 
         return [
-            [
-                polarization(influence_graph[i])
-                for i in range(self.number_of_agents)
-            ]
+            [polarization(influence_graph[i]) for i in range(self.number_of_agents)]
             for influence_graph in self.influence_graph_history
         ]
 
@@ -483,7 +480,41 @@ class UpdateFunctions:
             ]
             # return belief_array[i] + (1 / len(a_i)) * np.sum(
             return belief_array[i] + (1 / len(influence_graph[0])) * np.sum(
-                influence_graph[j][i] * (belief_array[j] - belief_array[i]) for j in a_i
+                # influence_graph[j][i] * (belief_array[j] - belief_array[i])
+                # for j in a_i
+                influence_graph[j][i] * (belief_array[j] - belief_array[i])
+                for j in range(len(influence_graph[0]))
+            )
+
+        return [
+            [next_b(i, belief_array) for i in range(len(belief_array))]
+            for belief_array in belief_state
+        ], influence_graph
+
+    @staticmethod
+    def confirmation_bias(
+        belief_state: list[list[float]], influence_graph: list[list[float]]
+    ) -> list[list[float]]:
+        """Computes the confirmation bias update of a belief state given a influence
+        graph.
+
+        Args:
+            belief_state (list[list[float]]): Belief state at time $t$.
+            influence_graph (list[list[float]]): Influence graph as a adjacency matrix.
+
+        Returns:
+            list[list[float]]: Belief state at time $t + 1$.
+        """
+
+        def next_b(i, belief_array):
+            a_i = [
+                j for j in range(len(influence_graph[i])) if influence_graph[j][i] > 0
+            ]
+            return belief_array[i] + (1 / len(a_i)) * np.sum(
+                (1 - np.abs(belief_array[j] - belief_array[i]))
+                * influence_graph[j][i]
+                * (belief_array[j] - belief_array[i])
+                for j in a_i
             )
 
         return [
@@ -527,7 +558,7 @@ class UpdateFunctions:
                 belief_state_, influence_graph
             )[0][0]
             new_influence_graph[i] = new_influence_array
-            new_influence_graph[i][i] = 1
+            # new_influence_graph[i][i] = 1
 
         return belief_state, new_influence_graph
 
